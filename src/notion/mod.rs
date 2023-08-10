@@ -3,26 +3,23 @@ use crate::prelude::*;
 use reqwest::{header::HeaderMap, Client};
 
 pub struct NotionApi {
-    pub client: Client,
-    pub headers: HeaderMap,
-    pub base_url: String,
-    pub database_id: String,
+    client: Client,
+    headers: HeaderMap,
+    base_url: String,
 }
 
 
 impl NotionApi {
     pub fn new(id: String, url: String) -> Self {
         let api_key = env::var("NOTION_API_KEY").unwrap();
-        let client = reqwest::Client::new();
         let mut headers = HeaderMap::new();
         headers.insert("Authorization", format!("Bearer {}", api_key).parse().unwrap());
         headers.insert("Notion-Version", "2022-06-28".parse().unwrap());
         headers.insert("Accept", "application/json".parse().unwrap());
         Self {
-            client,
+            client: reqwest::Client::new(),
             headers,
-            base_url: format!("https://api.notion.com/v1/{}/{}/query",url, id),
-            database_id: id,
+            base_url: format!("https://api.notion.com/v1/{}/{}/query",url, id)
         }
         
     }
@@ -31,7 +28,7 @@ impl NotionApi {
         println!("{}", "Getting articles from Notion API".yellow());
 
         let response = self.client
-        .post(self.base_url.clone())
+        .post(&self.base_url)
         .headers(self.headers.clone())
         .send()
         .await?
@@ -45,6 +42,5 @@ impl NotionApi {
     pub async fn get_article(&self) -> Result<String, Error> {
         self.get_articles().await.unwrap();
         reading_list::randomly_choose_article()
-        // Ok("hello".to_string())
     }
 }

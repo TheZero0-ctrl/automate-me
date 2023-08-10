@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use rand::{distributions::WeightedIndex, prelude::Distribution, thread_rng};
+use std::collections::HashMap;
 use std::fs;
 use std::io::BufWriter;
 use std::fs::File;
@@ -38,18 +39,33 @@ pub struct ReadingList {
     pub priority: i32,
 }
 
-pub fn update_reading_list(list_of_articles: &Vec<Article>) -> Result<(), Error> {
-    let file_path = env::var("READING_LIST_CSV").unwrap();
+fn write_reading_list_to_file(file_path: &str, reading_lists: &[ReadingList]) -> Result<(), Error> {
     let temp_file_path = "temp_reading_list.csv";
 
-    let mut rdr = ReaderBuilder::new().from_path(&file_path)?;
     let mut wtr = WriterBuilder::new().from_writer(BufWriter::new(File::create(&temp_file_path)?));
 
+    for record in reading_lists {
+        wtr.serialize(record)?;
+    }
+
+    wtr.flush()?;
+
+    fs::remove_file(file_path)?;
+    fs::rename(&temp_file_path, file_path)?;
+
+    Ok(())
+}
+
+
+pub fn update_reading_list(list_of_articles: &Vec<Article>) -> Result<(), Error> {
+    let file_path = env::var("READING_LIST_CSV").unwrap();
+    let mut rdr = ReaderBuilder::new().from_path(&file_path)?;
+
     let mut existing_data: Vec<ReadingList> = rdr.deserialize().map(|r| r.unwrap()).collect();
-    let existing_ids: Vec<String> = existing_data.iter().map(|r| r.id.clone()).collect();
+    let existing_ids: HashMap<String, usize> = existing_data.iter().enumerate().map(|(i, r)| (r.id.clone(), i)).collect();
 
     for article in list_of_articles {
-        let id = article.id.clone();
+        let id = &article.id;
         let url = article
             .url
             .clone();
@@ -58,35 +74,30 @@ pub fn update_reading_list(list_of_articles: &Vec<Article>) -> Result<(), Error>
         } else {
             100
         };
-        if !existing_ids.contains(&article.id) {
-            wtr.serialize(ReadingList {
-                id,
+
+        if let Some(index) = existing_ids.get(id) {
+            let data_to_update = &mut existing_data[*index];
+            if !data_to_update.did_i_read_it && article.properties.reading_info.read_it {
+                data_to_update.did_i_read_it = article.properties.reading_info.read_it;
+                data_to_update.priority = priority;
+            }
+        } else {
+            existing_data.push(ReadingList {
+                id: id.clone(),
                 url,
                 did_i_read_it: article.properties.reading_info.read_it,
                 priority,
-            })?;
-        } else {
-            let data_to_update = existing_data.iter_mut().find(|item| item.id == article.id).unwrap();
-            data_to_update.did_i_read_it = article.properties.reading_info.read_it;
-            wtr.serialize(data_to_update)?;
+            });
         }
     }
 
-    wtr.flush()?;
-
-    fs::remove_file(&file_path)?;
-    fs::rename(&temp_file_path, &file_path)?;
-
-    Ok(())
+    write_reading_list_to_file(&file_path, &existing_data)
 }
 
 pub fn randomly_choose_article() -> Result<String, Error> {
     println!("{}", "Choosing article".yellow());
     let file_path = env::var("READING_LIST_CSV").unwrap();
-    let temp_file_path = "temp_reading_list.csv";
-
     let mut rdr = ReaderBuilder::new().from_path(&file_path)?;
-    let mut wtr = WriterBuilder::new().from_writer(BufWriter::new(File::create(&temp_file_path)?));
 
     let mut reading_lists: Vec<ReadingList> = rdr.deserialize().map(|r| r.unwrap()).collect();
     let priorities: Vec<i32> = reading_lists.iter().map(|r| r.priority).collect();
@@ -102,13 +113,9 @@ pub fn randomly_choose_article() -> Result<String, Error> {
             record.priority -= 1;
             chosen_url = record.url.clone();
         }
-        wtr.serialize(record)?;
     }
 
-    wtr.flush()?;
-
-    fs::remove_file(&file_path)?;
-    fs::rename(&temp_file_path, &file_path)?;
+    write_reading_list_to_file(&file_path, &reading_lists)?;
 
     Ok(chosen_url)
 }
