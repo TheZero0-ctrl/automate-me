@@ -9,11 +9,18 @@ pub struct APIResponse {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Filter {
     pub filter: FilterDetails,
+    pub sorts: Vec<Sort>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FilterDetails {
     pub and: Vec<FilterCondition>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Sort {
+    pub property: String,
+    pub direction: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -122,6 +129,12 @@ impl Filter {
                     }),
                 ],
             },
+            sorts: vec![
+                Sort {
+                    property: String::from("Last edited time"),
+                    direction: String::from("descending") 
+                }
+            ],
         }
     }
 }
