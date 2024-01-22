@@ -23,7 +23,11 @@ impl RunCommand for GenerateStandUp {
         let stand_up = stand_up::generate_stand_up(tasks).await;
         println!("{}", stand_up.green());
         if self.slack {
-            println!("{}", "Sending stand up to slack".yellow());
+            let slack_api = SlackApi::new();
+            slack_api
+                .send_message(stand_up, env::var("SLACK_CHANNEL")
+                .unwrap())
+                .await?;
         }
         Ok(())
     }
