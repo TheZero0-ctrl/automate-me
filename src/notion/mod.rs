@@ -1,4 +1,7 @@
 pub mod reading_list;
+pub mod stand_up;
+
+
 use crate::prelude::*;
 use reqwest::{header::HeaderMap, Client};
 
@@ -42,5 +45,18 @@ impl NotionApi {
     pub async fn get_article(&self) -> Result<String, Error> {
         self.get_articles().await.unwrap();
         reading_list::randomly_choose_article()
+    }
+
+    pub async fn get_tasks_for_standup(&self) -> Result<Vec<stand_up::Task>, Error> {
+        let response = self.client
+        .post(&self.base_url)
+        .json(&stand_up::Filter::new())
+        .headers(self.headers.clone())
+        .send()
+        .await?
+        .json::<stand_up::APIResponse>()
+        .await?;
+
+        Ok(response.results)
     }
 }
