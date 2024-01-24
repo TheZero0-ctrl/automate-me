@@ -132,7 +132,7 @@ impl Filter {
             sorts: vec![
                 Sort {
                     property: String::from("Last edited time"),
-                    direction: String::from("descending") 
+                    direction: String::from("ascending") 
                 }
             ],
         }

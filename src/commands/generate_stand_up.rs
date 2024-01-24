@@ -29,6 +29,13 @@ impl RunCommand for GenerateStandUp {
                 .unwrap())
                 .await?;
         }
+
+        if self.timelog {
+            let sheet_api = GoogleSheetsApi::new(
+                env::var("SHEET_ID").unwrap(),
+            ).await;
+            sheet_api.post_timelog().await?;
+        }
         Ok(())
     }
 }
