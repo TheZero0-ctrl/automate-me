@@ -1,7 +1,8 @@
 extern crate google_sheets4 as sheets4;
-use sheets4::api::Spreadsheet;
+use sheets4::api::{Spreadsheet, ValueRange};
 use sheets4::{hyper, hyper_rustls};
 use sheets4::oauth2::{self, authenticator::Authenticator};
+use chrono::prelude::*;
 use crate::prelude::*;
 
 pub struct GoogleSheetsApi {
@@ -31,29 +32,63 @@ impl GoogleSheetsApi {
         Ok(result)
     }
 
-    pub async fn post_timelog(&self) -> Result<(), Error> {
-        self.get_or_create_sheet("Jan(2024)".to_string()).await?;
+    pub async fn post_timelog(&self, task: String, in_office: String, hrs: String) -> Result<(), Error> {
+        println!("{}", "Updating timelog".yellow());
+        let today = Local::now();
+        let day = today.day();
+        let month = today.format("%b").to_string();
+        let year = today.year();
+        let sheet_name = format!("{}({})", month, year);
+        if !self.contains_sheet(&sheet_name).await? {
+           todo!() 
+        }
+        let range = format!("{}!B{}:D{}", sheet_name, day + 1, day + 1);
+        let task = serde_json::Value::String(task);
+        let in_office = serde_json::Value::String(in_office);
+        let hrs = serde_json::Value::String(hrs);
+        let data = vec![vec![in_office, task, hrs]];
+        let req = ValueRange {
+            major_dimension: Some("ROWS".to_string()),
+            values: Some(data.clone()),
+            range: Some(range.clone()),
+        };
+
+        let result = self
+            .hub
+            .spreadsheets()
+            .values_update(req, &self.spreadsheet_id, &range)
+            .value_input_option("USER_ENTERED")
+            .doit()
+            .await;
+        match result {
+            Err(err) => {
+                println!("{}", "Failed to update timelog".red());
+                println!("{}", err.to_string().red());
+            }
+            Ok(_) => {
+                println!("{}", "Successfully updated Timelog".green());
+            }
+        }
         Ok(())
     }
 
-    pub async fn get_or_create_sheet(&self, sheet_name: String) -> Result<(), Error> {
+    async fn contains_sheet(&self, sheet_name: &str) -> Result<bool, Error> {
         let spreadsheet = self.get_spreadsheet().await?;
         if let Some(sheets) = spreadsheet.sheets {
             let found_sheet = sheets.iter().find(|sheet| {
                 sheet
                     .properties
                     .as_ref()
-                    .map_or(false, |props| props.title == Some(sheet_name.clone()))
+                    .map_or(false, |props| props.title == Some(sheet_name.to_string()))
             });
-            if let Some(sheet) = found_sheet {
-                println!("{:?}", sheet);
+            if let Some(_sheet) = found_sheet {
+                return Ok(true);
             } else {
-                todo!()
+                return Ok(false);
             }
         } else {
-            todo!()
-        };
-        Ok(())
+            return Ok(false);
+        }
     }
 }
 

@@ -9,6 +9,14 @@ pub struct GenerateStandUp {
     /// Flag for updating timelog on google sheet
     #[arg(short, long)]
     timelog: bool,
+    
+    /// data to fill out in timelog In Office header
+    #[arg(short, long, default_value = "WFH")]
+    in_office: String,
+
+    /// data to fill out in timelog Hours header
+    #[arg(short = 'w', long, default_value = "8")]
+    hours: String,
 }
 
 #[async_trait]
@@ -19,13 +27,13 @@ impl RunCommand for GenerateStandUp {
             env::var("NOTION_TASK_DATABASE_ID").unwrap(),
             "databases".to_string() 
         );
-        let tasks = api.get_tasks_for_standup().await?;
-        let stand_up = stand_up::generate_stand_up(tasks).await;
+        let tasks = api.get_tasks().await?;
+        let stand_up = tasks.tasks_for_standup();
         println!("{}", stand_up.green());
         if self.slack {
             let slack_api = SlackApi::new();
             slack_api
-                .send_message(stand_up, env::var("SLACK_CHANNEL")
+                .send_message(stand_up.clone(), env::var("SLACK_CHANNEL")
                 .unwrap())
                 .await?;
         }
@@ -34,7 +42,11 @@ impl RunCommand for GenerateStandUp {
             let sheet_api = GoogleSheetsApi::new(
                 env::var("SHEET_ID").unwrap(),
             ).await;
-            sheet_api.post_timelog().await?;
+            sheet_api.post_timelog(
+                tasks.tasks_for_timelog(),
+                self.in_office,
+                self.hours,
+            ).await?;
         }
         Ok(())
     }
