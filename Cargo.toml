@@ -10,6 +10,8 @@ clap = { version = "4.3.19", features = ["derive"] }
 anyhow = "1.0.72"
 colored = "2.0.4"
 dotenv = "0.15.0"
+google-sheets4 = "5.0.3"
+prost-types = "0.12.3"
 reqwest = { version = "0.11.18", features = ["json"]}
 serde = { version = "1.0.181", features = ["derive"]}
 tokio = { version = "1.29.1", features = ["full"]}

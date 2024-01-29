@@ -47,7 +47,7 @@ impl NotionApi {
         reading_list::randomly_choose_article()
     }
 
-    pub async fn get_tasks_for_standup(&self) -> Result<Vec<stand_up::Task>, Error> {
+    pub async fn get_tasks(&self) -> Result<stand_up::APIResponse, Error> {
         let response = self.client
         .post(&self.base_url)
         .json(&stand_up::Filter::new())
@@ -57,6 +57,6 @@ impl NotionApi {
         .json::<stand_up::APIResponse>()
         .await?;
 
-        Ok(response.results)
+        Ok(response)
     }
 }

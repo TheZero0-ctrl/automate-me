@@ -3,12 +3,14 @@ mod cli;
 mod commands;
 mod notion;
 mod slack;
+mod sheet;
 
 mod prelude {
     pub use std::env;
     pub use crate::cli::*;
     pub use crate::notion::*;
     pub use crate::slack::*;
+    pub use crate::sheet::*;
     pub use clap::{Parser, Subcommand, Args};
     pub use colored::Colorize;
     pub use crate::commands::*;
