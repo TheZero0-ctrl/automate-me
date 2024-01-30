@@ -10,5 +10,8 @@ This command pull the tasks from my task manager page on notion and generate a s
 
 #### Options
 - -s, --slack : Flag for sending stand up to slack
+- -t, --timelog : Flag for updating time log on google sheet
+- -i, --in-office : data to fill out on In Office header in google sheet [default: WFH]
+- -w, --hours : data to fill out on Hours header in google sheet [default: 8]
 
 more automation to comes...
