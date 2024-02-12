@@ -13,7 +13,7 @@ pub struct NotionApi {
 
 
 impl NotionApi {
-    pub fn new(id: String, url: String) -> Self {
+    pub fn new(endpoint: &str) -> Self {
         let api_key = env::var("NOTION_API_KEY").unwrap();
         let mut headers = HeaderMap::new();
         headers.insert("Authorization", format!("Bearer {}", api_key).parse().unwrap());
@@ -22,7 +22,7 @@ impl NotionApi {
         Self {
             client: reqwest::Client::new(),
             headers,
-            base_url: format!("https://api.notion.com/v1/{}/{}/query",url, id)
+            base_url: format!("https://api.notion.com/v1/{}",endpoint)
         }
         
     }
@@ -58,5 +58,22 @@ impl NotionApi {
         .await?;
 
         Ok(response)
+    }
+
+    pub async fn add_task(
+        &self,
+        task: String,
+        status: String,
+        database_id: String,
+        project: String
+    ) -> Result<(), Error> {
+        self.client
+            .post(&self.base_url)
+            .json(&stand_up::TaskToAdd::new(task, status, database_id, project))
+            .headers(self.headers.clone())
+            .send()
+            .await?;
+
+        Ok(())
     }
 }

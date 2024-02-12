@@ -1,0 +1,7 @@
+{
+  "mapping": {
+    "project1": "project1_database_id",
+    "project2": "project2_database_id"
+  }
+}
+

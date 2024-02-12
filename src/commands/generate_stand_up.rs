@@ -23,9 +23,12 @@ pub struct GenerateStandUp {
 impl RunCommand for GenerateStandUp {
     async fn run(self) ->  Result<(), Error> {
         println!("{}", "Generating stand up".yellow());
+        let database_id = env::var("NOTION_TASK_DATABASE_ID").unwrap();
         let api = NotionApi::new(
-            env::var("NOTION_TASK_DATABASE_ID").unwrap(),
-            "databases".to_string() 
+            &format!(
+                "databases/{}/query",
+                database_id
+            )
         );
         let tasks = api.get_tasks().await?;
         let stand_up = tasks.tasks_for_standup();

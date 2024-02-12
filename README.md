@@ -14,4 +14,13 @@ This command pull the tasks from my task manager page on notion and generate a s
 - -i, --in-office : data to fill out on In Office header in google sheet [default: WFH]
 - -w, --hours : data to fill out on Hours header in google sheet [default: 8]
 
+### `add-tasks` Command
+This command add tasks to my task manager page on notion
+
+#### Options
+- -t, --task : task to add
+- -s, --status : status of the task, Possible values: "to do", "in progress", "done" [default: done]
+- -p, --project : project of the task
+
+
 more automation to comes...
