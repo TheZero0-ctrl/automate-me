@@ -19,7 +19,6 @@ pub struct AddTask {
 #[async_trait]
 impl RunCommand for AddTask {
     async fn run(self) -> Result<(), Error> {
-        println!("{}", "Adding task".yellow());
         let database_id = env::var("NOTION_TASK_DATABASE_ID").unwrap();
         let api = NotionApi::new("pages");
 

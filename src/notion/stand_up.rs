@@ -68,6 +68,16 @@ impl FromStr for Status {
     }
 }
 
+impl ToString for Status {
+    fn to_string(&self) -> String {
+        match self {
+            Status::InProgress => String::from("In progress"),
+            Status::Done => String::from("Done"),
+            Status::ToDo => String::from("To Do"),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LastEditedTimeCondition {
     pub property: String,
