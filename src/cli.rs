@@ -1,7 +1,7 @@
 use anyhow::Error;
-
 use crate::prelude::*;
 use std::process::ExitCode;
+
 
 #[async_trait]
 pub trait RunCommand{
@@ -22,7 +22,10 @@ pub enum Commands  {
     /// generate stand up and post on slack and sheet based on flag provided
     GenerateStandUp(generate_stand_up::GenerateStandUp),
     /// add new tasks to notion task manager
-    AddTask(add_task::AddTask)
+    AddTask(add_task::AddTask),
+
+    /// run as a daemon
+    RunDaemon(run_daemon::RunDaemon)
 }
 
 impl Cli {
@@ -30,7 +33,8 @@ impl Cli {
         let output = match self.command {
             Commands::GiveMeArticle(give_me_article) => give_me_article.run().await,
             Commands::GenerateStandUp(generate_stand_up) => generate_stand_up.run().await,
-            Commands::AddTask(add_task) => add_task.run().await
+            Commands::AddTask(add_task) => add_task.run().await,
+            Commands::RunDaemon(run_daemon) => run_daemon.run().await
         };
 
         match output {
@@ -41,4 +45,5 @@ impl Cli {
             }
         }
     }
+
 }

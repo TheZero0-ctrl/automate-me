@@ -4,6 +4,10 @@ mod commands;
 mod notion;
 mod slack;
 mod sheet;
+mod utils;
+use daemonize::Daemonize;
+use std::fs::File;
+use std::process::ExitCode;
 
 mod prelude {
     pub use std::env;
@@ -22,8 +26,18 @@ mod prelude {
 
 use prelude::*;
 
-#[tokio::main]
-async fn main() {
+// #[tokio::main]
+fn main() -> ExitCode {
     dotenv().ok();
-    Cli::parse().run().await;
+    let cli = Cli::parse();
+    if matches!(cli.command, Commands::RunDaemon(_)) {
+        let daemonize = Daemonize::new()
+            .pid_file("/tmp/rust-app.pid")
+            .stdout(File::create("/tmp/rust-app.out").unwrap())
+            .stderr(File::create("/tmp/rust-app.err").unwrap());
+
+        daemonize.start().expect("Daemonization failed");
+    }
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(cli.run())
 }
